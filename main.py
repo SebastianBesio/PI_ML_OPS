@@ -19,14 +19,9 @@ You already created an API that:
     The path /items/{item_id} has an optional str query parameter q.
 """
 
-# STARTING HERE, Take this to another .py?
-import pandas as pd
-def read_steam_games_data():
-    """
-    Reads steam_games_format_ok.json and returns a dataframe.
-    """
-    return pd.read_json("datasets/steam_games_format_ok.json")
-
+########################################
+## TODO: Add validations
+########################################
 
 @app.get("/genero/{Year}")
 def genero(Year: str): 
@@ -36,19 +31,44 @@ def genero(Year: str):
     # Read data
     with open("datasets/steam_games_endpoint_1_genero.json") as json_file:
         genres_dict = json.load(json_file)
+
+    # TODO Add validation
+
     # Since data is already sorted, get the first 5 as top 5.
     top5 = dict(list(genres_dict[Year].items())[0:5])
     return top5
 
 
+@app.get("/juegos/{Year}")
+def juegos( Year: str ):
+    """
+    Se ingresa un año y devuelve un diccionario con los juegos lanzados en el año.
+    """
+    # Read data
+    with open("datasets/steam_games_endpoint_2_juegos.json") as json_file:
+        juegos_dict = json.load(json_file)
+
+    # TODO Add validation
+
+    return juegos_dict[Year]
+
+
+@app.get("/specs/{Year}")
+def specs( Year: str ):
+    """
+    Se ingresa un año y devuelve un diccionario con los 5 specs que más se repiten en el mismo en el orden correspondiente.
+    """
+    # Read data
+    with open("datasets/steam_games_endpoint_3_specs.json") as json_file:
+        specs_dict = json.load(json_file)
+
+    # TODO Add validation
+
+    # Since data is already sorted, get the first 5 as top 5.
+    top5 = dict(list(specs_dict[Year].items())[0:5])
+    return top5
 
 # DECORADOR????????
-# def juegos( Año: str ):
-#     """
-#     Se ingresa un año y devuelve un diccionario con los juegos lanzados en el año.
-#     """
-#     return 0
-
 # def specs( Año: str ):
 #     """
 #     Se ingresa un año y devuelve un diccionario con los 5 specs que más se repiten en el mismo en el orden correspondiente.
