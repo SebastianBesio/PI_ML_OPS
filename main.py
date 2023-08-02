@@ -1,5 +1,6 @@
 from typing import Union
 from fastapi import FastAPI
+import json
 
 app = FastAPI()
 
@@ -31,18 +32,12 @@ def read_steam_games_data():
 def genero(Year: str): 
     """
     Se ingresa un año y devuelve un diccionario con los 5 géneros más vendidos en el orden correspondiente.
-    
-    return DICTIONARY?
     """
     # Read data
-    df = read_steam_games_data()
-    # Since the genres column are list we need to explode it to count each genre.
-    df = df.explode('genres')
-    # Filter by the parameter year.
-    df = df[df['release_date'].str.contains(Year, na=False)]
-    # Get top 5 
-    top5 = df['genres'].value_counts()[0:5].to_dict()
-
+    with open("datasets/steam_games_endpoint_1_genero.json") as json_file:
+        genres_dict = json.load(json_file)
+    # Since data is already sorted, get the first 5 as top 5.
+    top5 = dict(list(genres_dict[Year].items())[0:5])
     return top5
 
 
