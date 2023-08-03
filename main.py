@@ -8,6 +8,10 @@ app = FastAPI()
 ## TODO: Add validations
 ########################################
 
+@app.get("/")
+def read_root(): 
+    return {"PI_ML_OPS": "Sebastian Besio"}
+
 @app.get("/genero/{Year}")
 def genero(Year: str): 
     """
