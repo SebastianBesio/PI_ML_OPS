@@ -1,5 +1,5 @@
-from typing import Union
-from fastapi import FastAPI
+from typing import Annotated
+from fastapi import FastAPI, Query
 import json
 
 app = FastAPI()
@@ -102,9 +102,91 @@ def metascore( Year: str ):
     top5 = dict(list(metascore_dict[Year].items())[0:5])
     return top5
 
+@app.get("/prediccion/")
+def prediccion(earlyaccess: bool, sentiment: str, year: int,
+               genre: Annotated[list[str] | None, Query()],
+               tags: Annotated[list[str] | None, Query()],
+               specs: Annotated[list[str] | None, Query()]):
+    """
+    Ingresando estos parámetros, deberíamos recibir el precio y RMSE.
 
-# def predicción(genero, earlyaccess = True, ): #  ( + Variables que elijas)
-#     """
-#     Ingresando estos parámetros, deberíamos recibir el precio y RMC.
-#     """
-#     return 0
+    Input example:
+    prediccion(
+        earlyaccess=False,
+        sentiment= 'Mostly Positive',
+        year=2018,
+        genre=['Action', 'Casual', 'Indie', 'Simulation', 'Strategy'],
+        tags=['Strategy', 'Action', 'Indie', 'Casual', 'Simulation'],
+        specs=['Single-player']
+    )
+    """
+    import sklearn
+    import pickle
+    import json
+    import numpy as np
+
+    print(sentiment, type(sentiment))
+    print(genre, type(genre))
+    print(tags, type(tags))
+    print(specs, type(specs))
+
+    # Open saved model
+    fname = 'Steam_Games_Model_SB.sav'
+    steam_games_price_model = pickle.load(open(fname, 'rb'))
+
+    # Read extra Misc information, RMSE, name of features and Sentiment Dictionary.
+    with open("Steam_Games_Model_Misc.json") as json_file:
+        misc_dict = json.load(json_file)
+    
+    rmse = misc_dict["RMSE"]
+    feat_names = misc_dict["Features"]
+    sentiment_dict = misc_dict["SentimentDict"]
+
+    # Prepare data
+    # TODO: Would like to put this on a Pipeline instead of doing this.
+
+    # First let's create the x feature list and start putting its values.
+    x = []
+    
+    # TODO VALIDATE
+    if earlyaccess in (0, 1):
+        x.append(earlyaccess)
+    else:
+        print("Error: Insert boolean value.")
+
+    # For the sentiment one we should convert it to the same number we used before.
+    if sentiment in sentiment_dict.keys():
+        x.append(sentiment_dict[sentiment])
+    else:
+        x.append(0)
+
+    if year > 1969 and year < 2024:
+        x.append(year)
+    else:
+        print("Error: insert correct year as an int.")
+
+    feat_names.remove("early_access")
+    feat_names.remove("sentiment")
+    feat_names.remove("year")
+
+    for f in feat_names:
+        if f.startswith("genre_"):
+            f_aux = f.replace("genre_", "")
+            x.append(f_aux in genre)
+
+        elif f.startswith("tags_"):
+            f_aux = f.replace("tags_", "")
+            x.append(f_aux in tags)
+
+        elif f.startswith("specs_"):
+            f_aux = f.replace("specs_", "")
+            x.append(f_aux in specs)
+        else:
+            x.append(0)
+    
+    # Make an array
+    x = np.array(x).reshape(1, -1)
+
+    pred_price = float(steam_games_price_model.predict(x))
+
+    return {"Price" : pred_price, "RMSE": rmse}
